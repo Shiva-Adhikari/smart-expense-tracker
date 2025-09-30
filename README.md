@@ -4,12 +4,12 @@
 
 ### **Week 1: Setup ✓**
 
-- [ ] Python, VS Code, Git installed
-- [ ] Project structure ready
-- [ ] Virtual environment working
-- [ ] Database connected
-- [ ] First API running
-- [ ] GitHub repository created
+- [x] Python, VS Code, Git installed
+- [x] Project structure ready
+- [x] Virtual environment working
+- [x] Database connected
+- [x] First API running
+- [x] GitHub repository created
 
 ### **Week 2-3: Auth & Basic CRUD ✓**
 
