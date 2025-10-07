@@ -4,10 +4,10 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     # === Database ===
-    DATABASE_URL = SecretStr
-    DEBUG = SecretStr
-    
-    # Class Config:
+    DATABASE_URL: SecretStr
+    DEBUG: bool
+    DEBUG_LEVEL: SecretStr
+
     model_config = SettingsConfigDict(
         env_file = '.env',
         env_file_encoding = 'utf-8',
