@@ -8,7 +8,12 @@ class UserRegister(BaseModel):
     password: str
 
 
-class UserResponse(BaseModel):
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class AuthResponse(BaseModel):
     id: int
     username: str
     email: EmailStr
@@ -18,6 +23,8 @@ class UserResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserLogin(BaseModel):
-    username: str
-    password: str
+class UserResponse(BaseModel):
+    message: str
+    user: AuthResponse
+
+    model_config = ConfigDict(from_attributes=True)

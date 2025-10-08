@@ -1,14 +1,15 @@
-from src.schemas.authentication import UserRegister, UserResponse, UserLogin
+from src.schemas.authentication import UserRegister, UserLogin, UserResponse
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from src.core.database import get_db
-from src.models.authentication import User, EmailVerification
-from sqlalchemy import select
+from src.models.authentication import User, EmailVerification, UserSession
+from sqlalchemy import select, and_, or_
 from src.utils.logger_util import logger
 from src.utils.generate_otp_util import generate_otp
 from datetime import datetime, timezone, timedelta
-from src.utils.password_hash_util import hash_password
+from src.utils.password_hash_util import hash_password, verify_password
 from src.utils.run import limiter
+import uuid
 
 
 router = APIRouter(prefix='/authentication', tags=['Authentication'])
@@ -77,21 +78,30 @@ def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResp
         )
 
     logger.debug('done')
-    return UserResponse.model_validate(user_table)
+    return UserResponse(
+        message='Register successful',
+        user=user_table
+    )
 
 
 @router.post('/verify-email')
 @limiter.limit("5/minute")
 def verify_email(request: Request, email: str, otp: int, db: Session = Depends(get_db)) -> dict:
-    user_table = db.query(User).filter(User.email == email).first()
+    user_table = db.scalars(
+        select(User).where(
+            User.email == email
+        )
+    ).first()
     if not user_table:
         raise HTTPException(status_code=404, detail='User not found')
 
     if user_table.is_verified:
         return {'message': 'User already verified'}
 
-    email_verification_table = db.query(EmailVerification).filter(
-        EmailVerification.user_id == user_table.id
+    email_verification_table = db.scalars(
+        select(EmailVerification).where(
+            EmailVerification.user_id == user_table.id
+        )
     ).first()
 
     # === Check if verification record exists FIRST ===
@@ -147,3 +157,51 @@ def verify_email(request: Request, email: str, otp: int, db: Session = Depends(g
     db.commit()
 
     return {'message': 'Email verified successfully'}
+
+
+@router.post('/login')
+def login(
+        user_credentials: UserLogin,
+        db: Session = Depends(get_db)):
+
+    # Both username or email is accepted to login and user should be verified.
+    user_table = db.scalars(
+        select(User).where(
+            and_(
+                or_(
+                    User.username == user_credentials.username,
+                    User.email == user_credentials.username
+                ),
+                User.is_verified
+            )
+        )
+    ).first()
+
+    if not user_table:
+        raise HTTPException(status_code=404, detail='User not found')
+
+    # Verify password, if it is matched or not.
+    verified_password = verify_password(
+        user_credentials.password, user_table.password)
+
+    if not verified_password:
+        raise HTTPException(status_code=401, detail='Password not match')
+
+    session_id = str(uuid.uuid4())
+
+    new_session = UserSession(
+        user_id=user_table.id,
+        token=session_id,
+        created_at=datetime.now(timezone.utc),
+        expires_at=datetime.now(timezone.utc) + timedelta(days=7)   # longer session for 7 days
+    )
+
+    user_table.is_active = True
+    db.add(new_session)
+    db.commit()
+
+    # Response
+    return UserResponse(
+        message='Login Successful',
+        user=user_table
+    )
