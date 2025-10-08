@@ -13,7 +13,7 @@
 
 ### **Week 2-3: Auth & Basic CRUD ✓**
 
-- [ ] User registration working
+- [x] User registration working
 - [ ] Login + JWT working
 - [ ] Add expense API
 - [ ] List expenses API
