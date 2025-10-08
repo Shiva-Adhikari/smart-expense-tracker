@@ -1,12 +1,6 @@
-from fastapi import FastAPI
 import uvicorn
-from src.core.database import create_tables
 from src.api.authentication import router as authentication_router
-
-
-create_tables()
-
-app = FastAPI()
+from src.utils.run import app
 
 
 @app.get('/')

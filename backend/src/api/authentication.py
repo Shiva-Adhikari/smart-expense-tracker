@@ -1,5 +1,5 @@
 from src.schemas.authentication import UserRegister, UserResponse, UserLogin
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from src.core.database import get_db
 from src.models.authentication import User, EmailVerification
@@ -8,6 +8,8 @@ from src.utils.logger_util import logger
 from src.utils.generate_otp_util import generate_otp
 from datetime import datetime, timezone, timedelta
 from src.utils.password_hash_util import hash_password
+from src.utils.run import limiter
+
 
 router = APIRouter(prefix='/authentication', tags=['Authentication'])
 
@@ -79,7 +81,8 @@ def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResp
 
 
 @router.post('/verify-email')
-def verify_email(email: str, otp: int, db: Session = Depends(get_db)) -> dict:
+@limiter.limit("5/minute")
+def verify_email(request: Request, email: str, otp: int, db: Session = Depends(get_db)) -> dict:
     user_table = db.query(User).filter(User.email == email).first()
     if not user_table:
         raise HTTPException(status_code=404, detail='User not found')
@@ -106,6 +109,11 @@ def verify_email(email: str, otp: int, db: Session = Depends(get_db)) -> dict:
         email_verification_table.expires_at = None
         db.commit()
         raise HTTPException(status_code=400, detail='Otp Expired')
+
+    if not email_verification_table.token:
+        raise HTTPException(
+                status_code=429,
+                detail='Otp Expired, Please request a new otp1')
 
     if int(email_verification_table.token) != int(otp):
         email_verification_table.attempts += 1
