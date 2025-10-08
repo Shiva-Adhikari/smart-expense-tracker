@@ -109,6 +109,11 @@ def verify_email(email: str, otp: int, db: Session = Depends(get_db)) -> dict:
 
     if int(email_verification_table.token) != int(otp):
         email_verification_table.attempts += 1
+
+        # Update max_attempts        
+        if email_verification_table.attempts > email_verification_table.max_attempts:
+            email_verification_table.max_attempts = email_verification_table.attempts
+
         db.commit()
 
         remaining = 5 - email_verification_table.attempts
@@ -125,6 +130,7 @@ def verify_email(email: str, otp: int, db: Session = Depends(get_db)) -> dict:
 
     # === Success - verify user and cleanup ===
     user_table.is_verified = True
+    email_verification_table.attempts = 0
     email_verification_table.token = None
     email_verification_table.expires_at = None
     email_verification_table.is_used = True
