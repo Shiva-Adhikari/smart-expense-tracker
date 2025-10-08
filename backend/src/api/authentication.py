@@ -1,4 +1,4 @@
-from src.schemas.authentication import UserRegister, UserResponse
+from src.schemas.authentication import UserRegister, UserResponse, UserLogin
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from src.core.database import get_db
@@ -9,10 +9,10 @@ from src.utils.generate_otp_util import generate_otp
 from datetime import datetime, timezone, timedelta
 from src.utils.password_hash_util import hash_password
 
-routes = APIRouter(prefix='/authentication', tags=['Authentication'])
+router = APIRouter(prefix='/authentication', tags=['Authentication'])
 
 
-@routes.post('/register', response_model=UserResponse)
+@router.post('/register', response_model=UserResponse)
 def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResponse:
     """Register User
     """
@@ -71,8 +71,65 @@ def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResp
     except Exception as e:
         db.rollback()
         raise HTTPException(
-            status_code=500, detail=f'Something went wrong {e}'
+            status_code=500, detail=f'Unable to register | {e}'
         )
 
     logger.debug('done')
     return UserResponse.model_validate(user_table)
+
+
+@router.post('/verify-email')
+def verify_email(email: str, otp: int, db: Session = Depends(get_db)) -> dict:
+    user_table = db.query(User).filter(User.email == email).first()
+    if not user_table:
+        raise HTTPException(status_code=404, detail='User not found')
+
+    if user_table.is_verified:
+        return {'message': 'User already verified'}
+
+    email_verification_table = db.query(EmailVerification).filter(
+        EmailVerification.user_id == user_table.id
+    ).first()
+
+    # === Check if verification record exists FIRST ===
+    if not email_verification_table:
+        raise HTTPException(status_code=400, detail='No verification record found')
+
+    # === check otp expired and not expires ===
+    if email_verification_table.is_used:
+        raise HTTPException(status_code=400, detail='Otp already used')
+
+    if (email_verification_table.expires_at and datetime.now(
+            timezone.utc) > email_verification_table.expires_at):
+        # cleanup expired otp
+        email_verification_table.token = None
+        email_verification_table.expires_at = None
+        db.commit()
+        raise HTTPException(status_code=400, detail='Otp Expired')
+
+    if int(email_verification_table.token) != int(otp):
+        email_verification_table.attempts += 1
+        db.commit()
+
+        remaining = 5 - email_verification_table.attempts
+        if remaining > 0:
+            raise HTTPException(
+                status_code=400,
+                detail=f'Invalid Otp, {remaining} attempts remaining')
+        else:
+            email_verification_table.token = None
+            db.commit()
+            raise HTTPException(
+                status_code=429,
+                detail='Otp Expired, Please request a new otp')
+
+    # === Success - verify user and cleanup ===
+    user_table.is_verified = True
+    email_verification_table.token = None
+    email_verification_table.expires_at = None
+    email_verification_table.is_used = True
+    email_verification_table.verified_at = datetime.now(timezone.utc)
+
+    db.commit()
+
+    return {'message': 'Email verified successfully'}

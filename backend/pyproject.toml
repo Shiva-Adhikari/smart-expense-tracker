@@ -6,10 +6,11 @@ readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.118.0",
-    "passlib[argon2,argon2-cffi,bcrypt]>=1.7.4",
+    "passlib[argon2]>=1.7.4",
     "psycopg2>=2.9.10",
     "pydantic-settings>=2.11.0",
     "pydantic[email]>=2.11.9",
+    "slowapi>=0.1.9",
     "sqlalchemy>=2.0.43",
     "uvicorn>=0.37.0",
 ]
