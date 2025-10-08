@@ -2,7 +2,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
 from src.core.config import settings
 from src.utils.logger_util import logger
-
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from typing import Annotated
 
 DATABASE_URL = settings.DATABASE_URL.get_secret_value()
 
@@ -26,3 +28,7 @@ def create_tables():
         logger.info('Created tables successfully')
     except Exception as e:
         logger.info(f'(Failed to create tables) | {e}')
+
+
+DB = Annotated[Session, Depends(get_db)]
+# CurrentUser = Annotated[int, Depends(get_current_user)]

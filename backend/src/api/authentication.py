@@ -1,7 +1,7 @@
 from src.schemas.authentication import UserRegister, UserLogin, UserResponse
-from fastapi import APIRouter, Depends, HTTPException, Request
-from sqlalchemy.orm import Session
-from src.core.database import get_db
+from fastapi import APIRouter, HTTPException, Request, Response
+# from sqlalchemy.orm import Session
+from src.core.database import DB
 from src.models.authentication import User, EmailVerification, UserSession
 from sqlalchemy import select, and_, or_
 from src.utils.logger_util import logger
@@ -16,7 +16,7 @@ router = APIRouter(prefix='/authentication', tags=['Authentication'])
 
 
 @router.post('/register', response_model=UserResponse)
-def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResponse:
+def user_register(user: UserRegister, db: DB) -> UserResponse:
     """Register User
     """
 
@@ -86,7 +86,7 @@ def user_register(user: UserRegister, db: Session = Depends(get_db)) -> UserResp
 
 @router.post('/verify-email')
 @limiter.limit("5/minute")
-def verify_email(request: Request, email: str, otp: int, db: Session = Depends(get_db)) -> dict:
+def verify_email(request: Request, email: str, otp: int, db: DB) -> dict:
     user_table = db.scalars(
         select(User).where(
             User.email == email
@@ -161,16 +161,17 @@ def verify_email(request: Request, email: str, otp: int, db: Session = Depends(g
 
 @router.post('/login')
 def login(
-        user_credentials: UserLogin,
-        db: Session = Depends(get_db)):
+        response: Response,
+        user: UserLogin,
+        db: DB):
 
     # Both username or email is accepted to login and user should be verified.
     user_table = db.scalars(
         select(User).where(
             and_(
                 or_(
-                    User.username == user_credentials.username,
-                    User.email == user_credentials.username
+                    User.username == user.username,
+                    User.email == user.username
                 ),
                 User.is_verified
             )
@@ -182,7 +183,7 @@ def login(
 
     # Verify password, if it is matched or not.
     verified_password = verify_password(
-        user_credentials.password, user_table.password)
+        user.password, user_table.password)
 
     if not verified_password:
         raise HTTPException(status_code=401, detail='Password not match')
@@ -199,6 +200,16 @@ def login(
     user_table.is_active = True
     db.add(new_session)
     db.commit()
+
+    response.set_cookie(
+        key="session_id",           # Cookie ko naam
+        value=session_id,           # Token value
+        httponly=True,              # JavaScript le access garna mildaina (security)
+        secure=False,                # HTTPS ma matra pathauccha (production ma)
+        samesite="lax",             # CSRF protection
+        max_age=7*24*60*60,         # 7 days (seconds ma)
+        path="/"                    # Sabai routes ma available
+    )
 
     # Response
     return UserResponse(
