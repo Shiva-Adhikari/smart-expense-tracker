@@ -25,11 +25,3 @@ class ResponseAddExpense(BaseModel):
     user_expense: ResponseExpense
 
     model_config = ConfigDict(from_attributes=True)
-
-
-class ResponseListExpense(BaseModel):
-    message: str
-    expense_count: int
-    expenses: list[ResponseExpense]
-
-    model_config = ConfigDict(from_attributes=True)
