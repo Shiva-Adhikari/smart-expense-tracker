@@ -14,16 +14,22 @@ class ResponseExpense(BaseModel):
     category: str
     amount: float
     description: str
-    expense_date: date = Field(..., description="Date in YYYY-MM-DD format")
-    created_at: datetime
-    updated_at: datetime
+    expense_date: date = Field(..., description="Date in YYYY-MM-DD format", example="2025-10-09")
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
 
 
-class UserExpense(BaseModel):
+class ResponseAddExpense(BaseModel):
     message: str
     user_expense: ResponseExpense
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponseListExpense(BaseModel):
+    message: str
+    expense_count: int
+    expenses: list[ResponseExpense]
 
     model_config = ConfigDict(from_attributes=True)
