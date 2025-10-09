@@ -17,7 +17,7 @@
 - [x] Login
 - [ ] JWT
 - [x] Add expense API
-- [ ] List expenses API
+- [x] List expenses API
 - [ ] Update/Delete expenses
 - [ ] Basic statistics
 
