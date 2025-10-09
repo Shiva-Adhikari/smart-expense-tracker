@@ -1,6 +1,5 @@
 from src.schemas.authentication import UserRegister, UserLogin, UserResponse
 from fastapi import APIRouter, HTTPException, Request, Response
-# from sqlalchemy.orm import Session
 from src.core.database import DB
 from src.models.authentication import User, EmailVerification, UserSession
 from sqlalchemy import select, and_, or_
@@ -159,11 +158,11 @@ def verify_email(request: Request, email: str, otp: int, db: DB) -> dict:
     return {'message': 'Email verified successfully'}
 
 
-@router.post('/login')
+@router.post('/login', response_model=UserResponse)
 def login(
         response: Response,
         user: UserLogin,
-        db: DB):
+        db: DB) -> UserResponse:
 
     # Both username or email is accepted to login and user should be verified.
     user_table = db.scalars(
@@ -188,11 +187,11 @@ def login(
     if not verified_password:
         raise HTTPException(status_code=401, detail='Password not match')
 
-    session_id = str(uuid.uuid4())
+    session_token = str(uuid.uuid4())
 
     new_session = UserSession(
         user_id=user_table.id,
-        token=session_id,
+        token=session_token,
         created_at=datetime.now(timezone.utc),
         expires_at=datetime.now(timezone.utc) + timedelta(days=7)   # longer session for 7 days
     )
@@ -202,13 +201,13 @@ def login(
     db.commit()
 
     response.set_cookie(
-        key="session_id",           # Cookie ko naam
-        value=session_id,           # Token value
-        httponly=True,              # JavaScript le access garna mildaina (security)
-        secure=False,                # HTTPS ma matra pathauccha (production ma)
-        samesite="lax",             # CSRF protection
-        max_age=7*24*60*60,         # 7 days (seconds ma)
-        path="/"                    # Sabai routes ma available
+        key="session_token",           # Cookie ko naam
+        value=session_token,           # Token value
+        httponly=True,                 # JavaScript le access garna mildaina (security)
+        secure=False,                  # HTTPS ma matra pathauccha (production ma)
+        samesite="lax",                # CSRF protection
+        max_age=7*24*60*60,            # 7 days (seconds ma)
+        path="/"                       # Sabai routes ma available
     )
 
     # Response

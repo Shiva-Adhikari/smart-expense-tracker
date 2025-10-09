@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from typing import Annotated
 
+
 DATABASE_URL = settings.DATABASE_URL.get_secret_value()
 
 DEBUG = settings.DEBUG
@@ -24,11 +25,11 @@ class Base(DeclarativeBase):
 
 def create_tables():
     try:
-        Base.metadata.create_all(engine)
+        # Base.metadata.drop_all(bind=engine)
+        Base.metadata.create_all(bind=engine)
         logger.info('Created tables successfully')
     except Exception as e:
         logger.info(f'(Failed to create tables) | {e}')
 
 
 DB = Annotated[Session, Depends(get_db)]
-# CurrentUser = Annotated[int, Depends(get_current_user)]
