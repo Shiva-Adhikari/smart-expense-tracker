@@ -28,14 +28,7 @@ class ResponseExpense(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class ResponseAddExpense(BaseModel):
-    message: str
-    user_expense: ResponseExpense
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ResponseUpdateExpense(BaseModel):
+class ResponseUserExpense(BaseModel):
     message: str
     user_expense: ResponseExpense
 

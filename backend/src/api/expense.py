@@ -1,10 +1,10 @@
 from src.core.database import DB
 from src.utils.get_current_user_util import GetCurrentUser
-from fastapi import APIRouter
-from src.schemas.expense import AddExpense, UpdateExpense, ResponseExpense, ResponseAddExpense, ResponseUpdateExpense
+from fastapi import APIRouter, HTTPException, status
+from src.schemas.expense import AddExpense, UpdateExpense, ResponseExpense, ResponseUserExpense
 from src.models.expense import Expense
 from datetime import date
-from sqlalchemy import select, update
+from sqlalchemy import select, update, delete
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -13,7 +13,7 @@ router = APIRouter(prefix='/expense', tags=['Expense'])
 
 
 @router.post('/add')
-def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseAddExpense:
+def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseUserExpense:
     """ Add Expense
     """
 
@@ -29,7 +29,7 @@ def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseAddEx
     db.commit()
     db.refresh(expense)
 
-    return ResponseAddExpense(
+    return ResponseUserExpense(
         message='Added successfully',
         user_expense=expense
     )
@@ -60,12 +60,12 @@ def list_expense(
 
 
 @router.put('/update/{id}')
-def update_expense(id: int, data: UpdateExpense, db: DB, user: GetCurrentUser):
+def update_expense(id: int, data: UpdateExpense, db: DB, user: GetCurrentUser) -> ResponseUserExpense:
 
     updated_data = db.scalars(
         update(Expense).where(
             Expense.id == id,
-            Expense.user_id == user.id  # ✅ current user ko check
+            Expense.user_id == user.id
         ).values(
             category=data.category,
             amount=data.amount,
@@ -74,9 +74,29 @@ def update_expense(id: int, data: UpdateExpense, db: DB, user: GetCurrentUser):
         ).returning(Expense)
     ).first()
 
+    if not updated_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Id not found')
+
     db.commit()
 
-    return ResponseUpdateExpense(
+    return ResponseUserExpense(
         message='Updated successfully',
         user_expense=updated_data
     )
+
+
+@router.delete('/delete/{id}')
+def delete_expense(id: int, db: DB, user: GetCurrentUser) -> dict:
+
+    delete_data = db.scalars(
+        delete(Expense).where(
+            Expense.id == id
+        ).returning(Expense)
+    ).first()
+
+    if not delete_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Id not found')
+
+    db.commit()
+
+    return {'message': 'Deleted successfully'}
