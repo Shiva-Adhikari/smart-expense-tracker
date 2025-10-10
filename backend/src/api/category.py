@@ -1,13 +1,9 @@
 from src.core.database import DB
 from src.utils.get_current_user_util import GetCurrentUser
 from fastapi import APIRouter, HTTPException, status
-# from src.schemas.expense import 
+from src.schemas.category import AddCategory, UpdateCategory, ResponseUserCategory
 from src.models.category import Category
-from datetime import date
-from sqlalchemy import select, update, delete, insert
-from fastapi_pagination import Page, add_pagination
-from fastapi_pagination.ext.sqlalchemy import paginate
-from collections import defaultdict
+from sqlalchemy import select, update, delete, insert, or_
 
 
 router = APIRouter(prefix='/category', tags=['Category'])
@@ -55,7 +51,7 @@ def init_category(db: DB) -> dict:
 
 
 @router.delete('/delete_all')
-def init_category(db: DB) -> dict:
+def delete_all_category(db: DB) -> dict:
     is_delete = db.scalars(
         delete(Category).returning(Category)
     )
@@ -68,3 +64,85 @@ def init_category(db: DB) -> dict:
     db.commit()
 
     return {'message': 'Delete successfully'}
+
+
+@router.get('/list_all')
+def list_all_category(db: DB, user: GetCurrentUser):
+    categories = db.scalars(
+        select(Category).where(
+            or_(
+                Category.user_id == user.id,
+                Category.user_id.is_(None)
+            )
+        )
+    ).all()
+
+    return {
+        'message': 'Fetch successfully',
+        'data': [data for data in categories]
+    }
+
+
+@router.post('/add')
+def add_category(data: AddCategory, user: GetCurrentUser, db: DB) -> ResponseUserCategory:
+    """ Add Category
+    """
+
+    category = Category(
+        user_id=user.id,
+        category_name=data.category_name,
+        icon=data.icon,
+    )
+
+    db.add(category)
+    db.commit()
+    db.refresh(category)
+
+    return ResponseUserCategory(
+        message='Added successfully',
+        user_category=category
+    )
+
+
+@router.put('/update/{id}')
+def update_category(id: int, data: UpdateCategory, db: DB, user: GetCurrentUser) -> ResponseUserCategory:
+
+    updated_data = db.scalars(
+        update(Category).where(
+            Category.id == id,
+            Category.user_id == user.id,
+            Category.is_default.is_(False)
+        ).values(
+            category_name=data.category_name,
+            icon=data.icon,
+        ).returning(Category)
+    ).first()
+
+    if not updated_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Id not found')
+
+    db.commit()
+
+    return ResponseUserCategory(
+        message='Updated successfully',
+        user_category=updated_data
+    )
+
+
+@router.delete('/delete/{id}')
+def delete_category(id: int, db: DB, user: GetCurrentUser) -> dict:
+
+    delete_data = db.scalars(
+        delete(Category).where(
+            Category.id == id,
+            Category.user_id == user.id,
+            Category.is_default.is_(False)
+        ).returning(Category)
+    ).first()
+
+    if not delete_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Id not found')
+
+    db.commit()
+
+    return {'message': 'Deleted successfully'}
