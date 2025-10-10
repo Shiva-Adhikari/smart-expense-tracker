@@ -18,7 +18,7 @@
 - [ ] JWT
 - [x] Add expense API
 - [x] List expenses API
-- [ ] Update/Delete expenses
+- [x] Update/Delete expenses
 - [ ] Basic statistics
 
 ### **Week 4-5: Advanced Features ✓**
