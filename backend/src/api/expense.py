@@ -1,10 +1,10 @@
 from src.core.database import DB
 from src.utils.get_current_user_util import GetCurrentUser
 from fastapi import APIRouter
-from src.schemas.expense import AddExpense, ResponseAddExpense, ResponseExpense
+from src.schemas.expense import AddExpense, UpdateExpense, ResponseExpense, ResponseAddExpense, ResponseUpdateExpense
 from src.models.expense import Expense
 from datetime import date
-from sqlalchemy import select
+from sqlalchemy import select, update
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 
@@ -39,10 +39,11 @@ def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseAddEx
 def list_expense(
     start_date: date, end_date: date, category: str,
     user: GetCurrentUser, db: DB) -> Page[ResponseExpense]:
-    """List Expense with pagination (from fastapi_pagination.ext.sqlalchemy import paginate)
+    """List Expense with pagination (from fastapi_pagination.ext.sqlalchemy import paginate).
     when we using (fastapi_pagination.ext.sqlalchemy) with paginate we don't need db.scalars
-    and pass directly query with db when return and cover with paginate
-    and search with order_by. and we don't need to use message or anything when return like other
+    and pass directly (query with db) when return and cover with paginate
+    and search with order_by. and we don't need to use message or anything 
+    when return like (add_expense)other
     it will break code, remember that.
     docs link: https://uriyyo-fastapi-pagination.netlify.app/#quickstart
     """
@@ -56,3 +57,26 @@ def list_expense(
         )
 
     return paginate(db, query)
+
+
+@router.put('/update/{id}')
+def update_expense(id: int, data: UpdateExpense, db: DB, user: GetCurrentUser):
+
+    updated_data = db.scalars(
+        update(Expense).where(
+            Expense.id == id,
+            Expense.user_id == user.id  # ✅ current user ko check
+        ).values(
+            category=data.category,
+            amount=data.amount,
+            description=data.description,
+            expense_date=data.expense_date,
+        ).returning(Expense)
+    ).first()
+
+    db.commit()
+
+    return ResponseUpdateExpense(
+        message='Updated successfully',
+        user_expense=updated_data
+    )

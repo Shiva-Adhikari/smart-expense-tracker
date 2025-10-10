@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict, Field
 from datetime import date, datetime
+from typing import Optional
 
 
 class AddExpense(BaseModel):
@@ -7,6 +8,13 @@ class AddExpense(BaseModel):
     amount: float
     description: str
     expense_date: date
+
+
+class UpdateExpense(BaseModel):
+    category: Optional[str]
+    amount: Optional[float]
+    description: Optional[str]
+    expense_date: Optional[date]
 
 
 class ResponseExpense(BaseModel):
@@ -21,6 +29,13 @@ class ResponseExpense(BaseModel):
 
 
 class ResponseAddExpense(BaseModel):
+    message: str
+    user_expense: ResponseExpense
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ResponseUpdateExpense(BaseModel):
     message: str
     user_expense: ResponseExpense
 
