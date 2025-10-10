@@ -19,7 +19,7 @@
 - [x] Add expense API
 - [x] List expenses API
 - [x] Update/Delete expenses
-- [ ] Basic statistics
+- [x] Basic statistics
 
 ### **Week 4-5: Advanced Features ✓**
 
