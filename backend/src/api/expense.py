@@ -91,7 +91,8 @@ def delete_expense(id: int, db: DB, user: GetCurrentUser) -> dict:
 
     delete_data = db.scalars(
         delete(Expense).where(
-            Expense.id == id
+            Expense.id == id,
+            Expense.user_id == user.id
         ).returning(Expense)
     ).first()
 
