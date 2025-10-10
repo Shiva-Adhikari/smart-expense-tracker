@@ -1,12 +1,13 @@
 from src.core.database import DB
 from src.utils.get_current_user_util import GetCurrentUser
 from fastapi import APIRouter, HTTPException, status
-from src.schemas.expense import AddExpense, UpdateExpense, ResponseExpense, ResponseUserExpense
+from src.schemas.expense import AddExpense, UpdateExpense, ResponseExpense, ResponseUserExpense, ResponseStatistics
 from src.models.expense import Expense
 from datetime import date
 from sqlalchemy import select, update, delete
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
+from collections import defaultdict
 
 
 router = APIRouter(prefix='/expense', tags=['Expense'])
@@ -100,3 +101,29 @@ def delete_expense(id: int, db: DB, user: GetCurrentUser) -> dict:
     db.commit()
 
     return {'message': 'Deleted successfully'}
+
+@router.get('/stats')
+def simple_statistics(db: DB, user: GetCurrentUser):
+    count_data = db.scalars(
+        select(Expense).where(
+            Expense.user_id == user.id
+        )
+    ).all()
+
+    if not count_data:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
+
+    total_expenses = sum(data.amount for data in count_data)
+    expense_count = len(count_data)
+    average = round(total_expenses/expense_count, 2)
+
+    categories = defaultdict(float)
+    for data in count_data:
+        categories[data.category] += data.amount
+    
+    return ResponseStatistics(
+        total_expenses=total_expenses,
+        expense_count=expense_count,
+        average=average,
+        categories=dict(categories)
+    )

@@ -33,3 +33,12 @@ class ResponseUserExpense(BaseModel):
     user_expense: ResponseExpense
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ResponseStatistics(BaseModel):
+    total_expenses: float
+    expense_count: float
+    average: float
+    categories: dict[str, float]
+
+    model_config = ConfigDict(from_attributes=True)
