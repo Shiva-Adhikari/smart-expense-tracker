@@ -1,6 +1,6 @@
 from src.core.database import Base
 from sqlalchemy import Integer, Float, String, Boolean, ForeignKey, DateTime, func, Date
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone, date
 
 
@@ -18,3 +18,6 @@ class Category(Base):
     updated_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+
+
+    category_: Mapped['Budget'] = relationship(back_populates='budget_')
