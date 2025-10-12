@@ -24,7 +24,7 @@
 ### **Week 4-5: Advanced Features ✓**
 
 - [x] Categories system
-- [ ] Budget tracking
+- [x] Budget tracking
 - [ ] File upload ready
 - [ ] Monthly reports
 - [ ] Export features
