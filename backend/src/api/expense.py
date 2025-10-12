@@ -20,7 +20,7 @@ def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseUserE
 
     expense = Expense(
         user_id=user.id,
-        category=data.category,
+        category_id=data.category_id,
         amount=data.amount,
         description=data.description,
         expense_date=data.expense_date
@@ -36,9 +36,9 @@ def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseUserE
     )
 
 
-@router.get('/list/{start_date}/{end_date}/{category}')
+@router.get('/list/{start_date}/{end_date}/{category_id}')
 def list_expense(
-    start_date: date, end_date: date, category: str,
+    start_date: date, end_date: date, category_id: int,
     user: GetCurrentUser, db: DB) -> Page[ResponseExpense]:
     """List Expense with pagination (from fastapi_pagination.ext.sqlalchemy import paginate).
     when we using (fastapi_pagination.ext.sqlalchemy) with paginate we don't need db.scalars
@@ -52,7 +52,7 @@ def list_expense(
     query = select(Expense).where(
             Expense.expense_date >= start_date,
             Expense.expense_date <= end_date,
-            Expense.category == category
+            Expense.category_id == category_id
         ).order_by(
             Expense.expense_date
         )
@@ -68,7 +68,7 @@ def update_expense(id: int, data: UpdateExpense, db: DB, user: GetCurrentUser) -
             Expense.id == id,
             Expense.user_id == user.id
         ).values(
-            category=data.category,
+            category_id=data.category_id,
             amount=data.amount,
             description=data.description,
             expense_date=data.expense_date,
@@ -103,6 +103,8 @@ def delete_expense(id: int, db: DB, user: GetCurrentUser) -> dict:
 
     return {'message': 'Deleted successfully'}
 
+
+# fix categories, line no 123 error
 @router.get('/stats')
 def simple_statistics(db: DB, user: GetCurrentUser):
     count_data = db.scalars(

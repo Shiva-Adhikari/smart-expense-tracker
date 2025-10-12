@@ -28,4 +28,14 @@ class Budget(Base):
             # name='unique_budget_per_month'),
     # )
 
-    budget_: Mapped['Category'] = relationship(back_populates='category_')
+    # # budget_: Mapped['Category'] = relationship(back_populates='category_')
+    # # budgets_: Mapped[list['Expense']] = relationship(back_populates='expenses_')
+
+
+    # # MANY budgets belong to ONE category
+    # category: Mapped['Category'] = relationship(back_populates='budgets')
+    # #         ↑ List chaina kina? Kina ki ek budget ko ek matra category!
+    
+    # # ONE budget has MANY expenses
+    # expenses: Mapped[list['Expense']] = relationship(back_populates='budget')
+    # #         ↑ List kina? Kina ki dherai expenses huncha!

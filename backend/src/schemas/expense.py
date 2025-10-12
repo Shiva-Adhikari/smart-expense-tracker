@@ -4,14 +4,14 @@ from typing import Optional
 
 
 class AddExpense(BaseModel):
-    category: str
+    category_id: int
     amount: float
     description: str
     expense_date: date
 
 
 class UpdateExpense(BaseModel):
-    category: Optional[str]
+    category_id: Optional[int]
     amount: Optional[float]
     description: Optional[str]
     expense_date: Optional[date]
@@ -19,7 +19,7 @@ class UpdateExpense(BaseModel):
 
 class ResponseExpense(BaseModel):
     id: int
-    category: str
+    category_id: int
     amount: float
     description: str
     expense_date: date = Field(..., description="Date in YYYY-MM-DD format", example="2025-10-09")

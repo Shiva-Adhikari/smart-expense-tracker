@@ -2,6 +2,7 @@ from src.core.database import Base
 from sqlalchemy import Integer, Float, String, Boolean, ForeignKey, DateTime, func, Date
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from datetime import datetime, timezone, date
+# from typing import List
 
 
 class Category(Base):
@@ -20,4 +21,11 @@ class Category(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
 
-    category_: Mapped['Budget'] = relationship(back_populates='budget_')
+    # ONE category has MANY budgets
+    # budgets: Mapped[list['Budget']] = relationship(back_populates='category')
+    #       ↑ List kina? Kina ki dherai budgets huncha!    
+    
+
+    # category_: Mapped[list['Budget']] = relationship(back_populates='budget_')
+
+    # category_: Mapped['Category'] = relationship(back_populates='category_')
