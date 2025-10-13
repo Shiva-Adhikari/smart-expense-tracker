@@ -3,7 +3,7 @@ from src.utils.get_current_user_util import GetCurrentUser
 from fastapi import APIRouter, HTTPException, status
 from src.schemas.budget import AddBudget, ResponseAddBudget
 from src.models.budget import Budget
-from sqlalchemy import select, update, delete, insert, or_
+from sqlalchemy import select, update, delete, insert, or_, func
 from sqlalchemy.orm import joinedload
 from src.models.expense import Expense
 from src.models.category import Category
@@ -66,7 +66,10 @@ def budget_status(db: DB, user: GetCurrentUser):
         expenses = db.scalars(
             select(Expense).where(
                 Expense.category_id == category.id,
-                Expense.user_id == user.id
+                Expense.user_id == user.id,
+                # extract only month from Expense.expense_date and compare to budget.month | like also year >
+                func.extract('month', Expense.expense_date) == budget.month,
+                func.extract('year', Expense.expense_date) == budget.year
             )
         ).all()
 
