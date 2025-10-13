@@ -8,6 +8,7 @@ from sqlalchemy import select, update, delete
 from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from collections import defaultdict
+from src.models.category import Category
 
 
 router = APIRouter(prefix='/expense', tags=['Expense'])
@@ -17,6 +18,15 @@ router = APIRouter(prefix='/expense', tags=['Expense'])
 def add_expense(data: AddExpense, user: GetCurrentUser, db: DB) -> ResponseUserExpense:
     """ Add Expense
     """
+
+    category_ids = db.scalars(
+        select(Category).where(
+            Category.id == data.category_id
+        )
+    ).first()
+
+    if not category_ids:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Category not found')
 
     expense = Expense(
         user_id=user.id,

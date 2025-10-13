@@ -77,6 +77,9 @@ def list_all_category(db: DB, user: GetCurrentUser):
         )
     ).all()
 
+    if not categories:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Category is empty')
+
     return {
         'message': 'Fetch successfully',
         'data': [data for data in categories]
