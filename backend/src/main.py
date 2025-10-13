@@ -18,8 +18,8 @@ def health():
 
 # Include router
 app.include_router(authentication_router, prefix='/api/v1')
-app.include_router(expense_router, prefix='/api/v1')
 app.include_router(category_router, prefix='/api/v1')
+app.include_router(expense_router, prefix='/api/v1')
 app.include_router(budget_router, prefix='/api/v1')
 
 add_pagination(app)
