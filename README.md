@@ -26,6 +26,7 @@
 - [x] Categories system
 - [x] Budget tracking
 - [x] File upload ready
+- [x] Incomes system
 - [ ] Monthly reports
 - [ ] Export features
 
