@@ -27,7 +27,7 @@
 - [x] Budget tracking
 - [x] File upload ready
 - [x] Incomes system
-- [ ] Monthly reports
+- [x] Monthly reports
 - [ ] Export features
 
 ### **Week 6: AI Features ✓**
