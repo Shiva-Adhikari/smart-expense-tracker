@@ -44,6 +44,7 @@ def monthly_summary(income_date: str, db: DB, user: GetCurrentUser):
     savings = total_income - total_expense
     savings_rate = round((savings / total_income) * 100, 2)
     
+    # DRY
     categories = db.execute(
         select(Expense, Category).where(
             Expense.user_id == user.id
@@ -54,7 +55,7 @@ def monthly_summary(income_date: str, db: DB, user: GetCurrentUser):
     category = defaultdict(Decimal)
     for expense, data in categories:
         category[data.category_name] += expense.amount
-    
+
     # get in dictionary
     category_breakdown = []
     for key, value in category.items():
@@ -63,6 +64,7 @@ def monthly_summary(income_date: str, db: DB, user: GetCurrentUser):
             'amount': value,
             'percentage': round((value / total_expense) * 100, 0)
         })
+    # DRY
     
     daily_average = round(total_expense / days_in_month, 2)
 
