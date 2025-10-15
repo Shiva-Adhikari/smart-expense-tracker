@@ -21,6 +21,8 @@ router = APIRouter(prefix='/analytics', tags=['Analytics'])
 
 @router.get('/trends/{aggregation}')
 def daily_weekly_aggregation(aggregation: str, db: DB, user: GetCurrentUser):
+    """ Generate monthly, weeky of 6 months and 30 days of analysis
+    """
 
     match (aggregation):
         case 'monthly':
@@ -35,6 +37,151 @@ def daily_weekly_aggregation(aggregation: str, db: DB, user: GetCurrentUser):
         case _:
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail='allowed only (monthly, weekly and daily)')
 
+
+@router.get('/comparison/{aggregation}')
+def comparison_year_month(aggregation: str, db: DB, user: GetCurrentUser):
+    """ Comparison year_over_year, month_over_month
+    """
+    
+    match (aggregation):
+        case 'year':
+            return year(aggregation, db, user)
+
+        case 'month':
+            return month(aggregation, db, user)
+            pass
+
+        case _:
+            raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail='allowed only (yearly, monthly)')
+
+
+    
+    
+# ########################## daily_weekly_aggregation ##########################
+
+def year(aggregation: str, db: DB, user: GetCurrentUser):
+    """ Get yearly comparison
+    """
+    
+    period = aggregation
+
+    this_year = datetime.now()
+    current_year = this_year - relativedelta(years=1)
+    previous_year = this_year
+    data = []
+
+    while current_year <= this_year:
+        year = current_year.year
+        month = current_year.month
+        current_year = current_year + relativedelta(years=1)
+
+        # get like this (may 2025)
+        month_name = calendar.month_name[month]
+        date_formatted = f'{month_name} {year}'
+
+        # get expenses using join
+        expenses = db.execute(
+            select(Expense, Category).where(
+                Expense.user_id == user.id,
+                func.extract('year', Expense.expense_date) == year,
+            ).join(Category, Expense.category_id == Category.id)
+        ).all()
+        
+        if expenses:
+            # get category_name and sum of amount of same category
+            categories = defaultdict(Decimal)
+            for expense, category in expenses:
+                categories[category.category_name] += expense.amount
+
+            # sum total expense
+            total_expense = sum(categories.values())
+
+            data.append({
+                # 'date':get_current_date.strftime('%Y-%m-%d'),
+                'date':date_formatted,
+                'total_amount': total_expense
+            })
+
+    current_date = data[1]['date']
+    current_amount = data[1]['total_amount']
+    previous_date = data[0]['date']
+    previous_amount = data[0]['total_amount']
+    _difference = current_amount - previous_amount
+
+    return {
+        f'{period}_over_{period}': {
+            f'current_{period}': current_date,
+            'current_amount': current_amount,
+            f'previous_{period}': previous_date,
+            'previous_amount': previous_amount,
+            'difference': _difference,
+            'percentage_change': round((_difference / previous_amount) * 100, 0)
+        }
+    }
+
+# '''
+def month(aggregation: str, db: DB, user: GetCurrentUser):
+    """ Get yearly comparison
+    """
+    
+    period = aggregation
+
+    this_year = datetime.now()
+    current_year = this_year - relativedelta(months=1)
+    previous_year = this_year
+    data = []
+
+    while current_year <= this_year:
+        year = current_year.year
+        month = current_year.month
+        current_year = current_year + relativedelta(months=1)
+
+        # get like this (may 2025)
+        month_name = calendar.month_name[month]
+        date_formatted = f'{month_name} {year}'
+
+        # get expenses using join
+        expenses = db.execute(
+            select(Expense, Category).where(
+                Expense.user_id == user.id,
+                func.extract('month', Expense.expense_date) == month,
+            ).join(Category, Expense.category_id == Category.id)
+        ).all()
+
+        if expenses:
+            # get category_name and sum of amount of same category
+            categories = defaultdict(Decimal)
+            for expense, category in expenses:
+                categories[category.category_name] += expense.amount
+
+            # sum total expense
+            total_expense = sum(categories.values())
+
+            data.append({
+                # 'date':get_current_date.strftime('%Y-%m-%d'),
+                'date':date_formatted,
+                'total_amount': total_expense
+            })
+
+    current_date = data[1]['date']
+    current_amount = data[1]['total_amount']
+    previous_date = data[0]['date']
+    previous_amount = data[0]['total_amount']
+    _difference = current_amount - previous_amount
+
+    return {
+        f'{period}_over_{period}': {
+            f'current_{period}': current_date,
+            'current_amount': current_amount,
+            f'previous_{period}': previous_date,
+            'previous_amount': previous_amount,
+            'difference': _difference,
+            'percentage_change': round((_difference / previous_amount) * 100, 0)
+        }
+    }
+# '''
+
+# ########################## daily_weekly_aggregation ##########################
 
 def monthly(aggregation: str, db: DB, user: GetCurrentUser):
     
