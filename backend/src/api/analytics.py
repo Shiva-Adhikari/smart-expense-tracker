@@ -55,8 +55,63 @@ def comparison_year_month(aggregation: str, db: DB, user: GetCurrentUser):
             raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail='allowed only (yearly, monthly)')
 
 
+@router.get('/top-expenses')
+def top_expenses(db: DB, user: GetCurrentUser):
     
+    # get expenses using join
+    expenses = db.execute(
+        select(Expense, Category).where(
+            Expense.user_id == user.id,
+        ).join(Category, Expense.category_id == Category.id)
+    ).all()
+
+    if expenses:
+        # '''
+        # get category_name and sum of amount of same category
+        category_totals = defaultdict(Decimal)
+        category_counts = defaultdict(int)
+        for expense, category in expenses:
+            category_totals[category.category_name] += expense.amount
+            category_counts[category.category_name] += 1
+            
+        total_expense = sum(category_totals.values())
+        result = []
+        for category_name in category_totals:
+            result.append({
+                'category': category_name,
+                'total_amount': category_totals[category_name],
+                'percentage': round((category_totals[category_name] / total_expense) * 100, 0),
+                'transaction_count': category_counts[category_name]
+            })
+        # '''
     
+    # highest_transactions code
+    max_expenses = db.execute(
+        select(Expense, Category).where(
+            Expense.user_id == user.id
+        ).join(Category, Expense.category_id == Category.id)
+        .order_by(Category.category_name, Expense.amount.desc())
+        .distinct(Category.category_name)
+    ).all()
+
+    highest_transactions = []
+    for expense, category in max_expenses:
+        highest_transactions.append({
+            'id': expense.id,
+            'category': category.category_name,
+            'amount': expense.amount,
+            'date': expense.expense_date,
+            'description': expense.description
+        })
+        # print(f"{category.category_name}: {expense.id}, {expense.description}, {expense.expense_date}, {expense.amount}")
+
+
+    return {
+        'top_categories': result,
+        'highest_transactions': highest_transactions
+    }
+
+
 # ########################## daily_weekly_aggregation ##########################
 
 def year(aggregation: str, db: DB, user: GetCurrentUser):
