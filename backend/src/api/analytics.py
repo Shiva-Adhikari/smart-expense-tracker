@@ -65,25 +65,25 @@ def top_expenses(db: DB, user: GetCurrentUser):
         ).join(Category, Expense.category_id == Category.id)
     ).all()
 
-    if expenses:
-        # '''
-        # get category_name and sum of amount of same category
-        category_totals = defaultdict(Decimal)
-        category_counts = defaultdict(int)
-        for expense, category in expenses:
-            category_totals[category.category_name] += expense.amount
-            category_counts[category.category_name] += 1
-            
-        total_expense = sum(category_totals.values())
-        result = []
-        for category_name in category_totals:
-            result.append({
-                'category': category_name,
-                'total_amount': category_totals[category_name],
-                'percentage': round((category_totals[category_name] / total_expense) * 100, 0),
-                'transaction_count': category_counts[category_name]
-            })
-        # '''
+    if not expenses:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
+
+    # get category_name and sum of amount of same category
+    category_totals = defaultdict(Decimal)
+    category_counts = defaultdict(int)
+    for expense, category in expenses:
+        category_totals[category.category_name] += expense.amount
+        category_counts[category.category_name] += 1
+    
+    total_expense = sum(category_totals.values())
+    result = []
+    for category_name in category_totals:
+        result.append({
+            'category': category_name,
+            'total_amount': category_totals[category_name],
+            'percentage': round((category_totals[category_name] / total_expense) * 100, 0),
+            'transaction_count': category_counts[category_name]
+        })
     
     # highest_transactions code
     max_expenses = db.execute(
@@ -94,6 +94,9 @@ def top_expenses(db: DB, user: GetCurrentUser):
         .distinct(Category.category_name)
     ).all()
 
+    if not max_expenses:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
+
     highest_transactions = []
     for expense, category in max_expenses:
         highest_transactions.append({
@@ -103,8 +106,6 @@ def top_expenses(db: DB, user: GetCurrentUser):
             'date': expense.expense_date,
             'description': expense.description
         })
-        # print(f"{category.category_name}: {expense.id}, {expense.description}, {expense.expense_date}, {expense.amount}")
-
 
     return {
         'top_categories': result,
