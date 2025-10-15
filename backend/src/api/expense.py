@@ -9,6 +9,7 @@ from fastapi_pagination import Page, add_pagination
 from fastapi_pagination.ext.sqlalchemy import paginate
 from collections import defaultdict
 from src.models.category import Category
+from decimal import Decimal
 
 
 router = APIRouter(prefix='/expense', tags=['Expense'])
@@ -117,22 +118,22 @@ def delete_expense(id: int, db: DB, user: GetCurrentUser) -> dict:
 # fix categories, line no 123 error
 @router.get('/stats')
 def simple_statistics(db: DB, user: GetCurrentUser):
-    count_data = db.scalars(
-        select(Expense).where(
+    expenses = db.execute(
+        select(Category, Expense).where(
             Expense.user_id == user.id
-        )
+        ).join(Category, Expense.category_id == Category.id)
     ).all()
 
-    if not count_data:
+    if not expenses:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
 
-    total_expenses = sum(data.amount for data in count_data)
-    expense_count = len(count_data)
+    total_expenses = sum(exp.amount for cat, exp in expenses)
+    expense_count = len(expenses)
     average = round(total_expenses/expense_count, 2)
 
-    categories = defaultdict(float)
-    for data in count_data:
-        categories[data.category] += data.amount
+    categories = defaultdict(Decimal)
+    for category, expense in expenses:
+        categories[category.category_name] += expense.amount
     
     return ResponseStatistics(
         total_expenses=total_expenses,
