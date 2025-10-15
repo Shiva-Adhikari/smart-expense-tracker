@@ -28,6 +28,7 @@
 - [x] File upload ready
 - [x] Incomes system
 - [x] Monthly reports
+- [x] Data Visualization Ready
 - [ ] Export features
 
 ### **Week 6: AI Features ✓**
