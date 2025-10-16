@@ -19,7 +19,7 @@ router = APIRouter(prefix='/export', tags=['Export'])
 @router.get('/to_csv/{start_date}/{end_date}/{category_id}')
 def export_to_csv(
     start_date: date, end_date: date, category_id: int,
-    db: DB, user: GetCurrentUser):
+    db: DB, user: GetCurrentUser) -> FileResponse:
 
     expenses = db.scalars(
         select(Expense).where(
@@ -48,4 +48,55 @@ def export_to_csv(
         path='list_expenses.csv',
         filename='expenses_report.csv',
         media_type='text/csv'
+    )
+
+
+@router.get('/to_excel/{start_date}/{end_date}/{category_id}')
+def export_to_excel(
+    start_date: date, end_date: date, category_id: int,
+    db: DB, user: GetCurrentUser) -> FileResponse:
+
+    expenses = db.scalars(
+        select(Expense).where(
+            Expense.expense_date >= start_date,
+            Expense.expense_date <= end_date,
+            Expense.category_id == category_id
+        )
+    ).all()
+
+    if not expenses:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
+
+    # Create a new workbook and select active sheet
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Expenses Report"
+
+    # Get fieldnames (exclude SQLAlchemy internals)
+    fieldnames = [key for key in expenses[0].__dict__.keys() if not key.startswith('_')]
+
+    # Write header row
+    ws.append(fieldnames)
+
+    # Write data rows
+    for expense in expenses:
+        row_data = []
+        for field in fieldnames:
+            value = getattr(expense, field)
+            # Convert timezone-aware datetime to naive datetime
+            if isinstance(value, datetime) and value.tzinfo is not None:
+                value = value.astimezone().replace(tzinfo=None)  # Local time मा convert
+            row_data.append(value)
+        ws.append(row_data)
+
+    # Save the workbook
+    excel_file = 'expenses_report.xlsx'
+    wb.save(excel_file)
+
+    print('Excel file created successfully!')
+
+    return FileResponse(
+        path=excel_file,
+        filename='expenses_report.xlsx',
+        media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
     )
