@@ -33,7 +33,7 @@
 
 ### **Week 6: AI Features ✓**
 
-- [ ] ML categorization
+- [x] ML categorization
 - [ ] Spending prediction
 - [ ] Anomaly detection
 - [ ] AI insights API
