@@ -8,6 +8,7 @@ from src.api.income import router as income_router
 from src.api.generate_monthly_report import router as generate_monthly_report_router
 from src.api.analytics import router as analytics_router
 from src.api.export import router as export_router
+from src.api.ai import router as ai_router
 from src.utils.run import app
 from src.core.database import create_tables
 from fastapi_pagination import add_pagination
@@ -31,6 +32,7 @@ app.include_router(income_router, prefix='/api/v1')
 app.include_router(generate_monthly_report_router, prefix='/api/v1')
 app.include_router(analytics_router, prefix='/api/v1')
 app.include_router(export_router, prefix='/api/v1')
+app.include_router(ai_router, prefix='/api/v1')
 
 add_pagination(app)
 
