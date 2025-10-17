@@ -15,7 +15,7 @@
 
 - [x] User registration working
 - [x] Login
-- [ ] JWT
+- [ ] JWT, not needed for now.
 - [x] Add expense API
 - [x] List expenses API
 - [x] Update/Delete expenses
