@@ -119,7 +119,7 @@ def monthly_summary(income_date: str, db: DB, user: GetCurrentUser):
     ).all()
 
     if not count_data:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Database is empty')
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail='Please add your income first')
 
     total_income = sum(amt.amount for amt in count_data)
 
