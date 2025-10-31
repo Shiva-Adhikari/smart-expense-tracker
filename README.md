@@ -35,7 +35,7 @@
 
 - [x] ML categorization
 - [x] Spending prediction
-- [ ] Anomaly detection
+- [x] Anomaly detection
 - [ ] AI insights API
 
 ### **Week 7: Frontend ✓**
