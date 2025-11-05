@@ -36,12 +36,11 @@
 - [x] ML categorization
 - [x] Spending prediction
 - [x] Anomaly detection
-- [ ] AI insights API
 
 ### **Week 7: Frontend ✓**
 
-- [ ] React app setup
-- [ ] Login page
+- [x] React app setup
+- [x] Login page
 - [ ] Dashboard
 - [ ] Forms working
 - [ ] Charts displaying
