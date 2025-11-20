@@ -1,7 +1,41 @@
 from tests.test_db import client, get_db
-from src.schemas.authentication import UserRegister
+from src.schemas.authentication import UserRegister, UserLogin
 from src.models.authentication import User, EmailVerification
 from sqlalchemy import select
+import pytest
+
+
+def _login_user():
+    # First register
+    user = UserRegister(
+        email = "six@example.com",
+        username = "six_user",
+        password = "SecurePass123",
+        is_active = True
+    )
+    response = client.post('/api/v1/authentication/register', json=user.model_dump())
+
+    # Check status
+    assert response.status_code == 200
+    
+    # Manually verify the user
+    db = next(get_db())
+    user_in_db = db.scalars(
+        select(User).filter(User.email == 'six@example.com')
+    ).first()
+    user_in_db.is_verified = True
+    db.commit()
+    db.close()
+
+    # login user
+    user1 = UserLogin(
+        username='six_user',
+        password='SecurePass123'
+    )
+    response1 = client.post('/api/v1/authentication/login', json=user1.model_dump())
+
+    assert response1.status_code == 200
+    assert response1.json()['message'] == 'Login Successful'
 
 
 class TestRegister:
@@ -32,8 +66,8 @@ class TestRegister:
     def test_user_register_duplicate_email(self):
         # First registration - should succeed
         user = UserRegister(
-            email = "one@example.com",
-            username = "one_user",
+            email = "two@example.com",
+            username = "two_user",
             password = "SecurePass123",
             is_active = True
         )
@@ -45,7 +79,7 @@ class TestRegister:
         # Manually verify the user (simulate email verification)
         db = next(get_db())
         user_in_db = db.scalars(
-            select(User).filter(User.email == 'one@example.com')
+            select(User).filter(User.email == 'two@example.com')
         ).first()
         user_in_db.is_verified = True
         db.commit()
@@ -53,7 +87,7 @@ class TestRegister:
 
         # Try register again with same email - should fail with 409 (duplicate)
         user = UserRegister(
-            email = "one@example.com",
+            email = "two@example.com",
             username = "two_user",
             password = "SecurePass123",
             is_active = True
@@ -107,8 +141,7 @@ class TestRegister:
             email = "five@example.com",
             username = "five_user",
             password = "SecurePass123",
-            is_active = True,
-            is_verified = False
+            is_active = True
         )
         response = client.post('/api/v1/authentication/register', json=user.model_dump())
 
@@ -128,13 +161,13 @@ class TestRegister:
         # ==================
 
         # Second time registration - same second username
-        user2 = UserRegister(
+        user1 = UserRegister(
             email = "five@example.com",
             username = "five_user",
             password = "SecurePass123",
-            is_active = True,
+            is_active = True
         )
-        response2 = client.post('/api/v1/authentication/register', json=user2.model_dump())
+        response2 = client.post('/api/v1/authentication/register', json=user1.model_dump())
 
         # Should succeed (old unverified user was deleted)
         assert response2.status_code == 200
@@ -148,3 +181,7 @@ class TestRegister:
         ).all()
         assert len(all_users) == 1  # Only one user should exist
         db.close()
+
+
+    def test_user_register_login_successfully(self):
+        _login_user()
