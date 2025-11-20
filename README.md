@@ -47,7 +47,7 @@
 
 ### **Week 8: Final ✓**
 
-- [ ] All tests passing
+- [x] All tests passing
 - [ ] Documentation complete
 - [ ] Code clean & commented
 - [ ] Deployed online
