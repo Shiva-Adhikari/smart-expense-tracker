@@ -1,0 +1,54 @@
+# Smart Expense Tracker
+
+## 📊 **Progress Tracking Checklist**
+
+### **Week 1: Setup ✓**
+
+- [x] Python, VS Code, Git installed
+- [x] Project structure ready
+- [x] Virtual environment working
+- [x] Database connected
+- [x] First API running
+- [x] GitHub repository created
+
+### **Week 2-3: Auth & Basic CRUD ✓**
+
+- [x] User registration working
+- [x] Login
+- [ ] JWT, not needed for now.
+- [x] Add expense API
+- [x] List expenses API
+- [x] Update/Delete expenses
+- [x] Basic statistics
+
+### **Week 4-5: Advanced Features ✓**
+
+- [x] Categories system
+- [x] Budget tracking
+- [x] File upload ready
+- [x] Incomes system
+- [x] Monthly reports
+- [x] Data Visualization Ready
+- [x] Export features
+
+### **Week 6: AI Features ✓**
+
+- [x] ML categorization
+- [x] Spending prediction
+- [x] Anomaly detection
+
+### **Week 7: Frontend ✓**
+
+- [x] React app setup
+- [x] Login page
+- [ ] Dashboard
+- [ ] Forms working
+- [ ] Charts displaying
+
+### **Week 8: Final ✓**
+
+- [x] All tests passing
+- [x] Documentation complete
+- [ ] Code clean & commented
+- [ ] Deployed online
+- [ ] Demo ready
